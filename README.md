@@ -18,22 +18,22 @@ With this MCP server:
 
 ## 🎯 Try the Demo!
 
-We've built a complete **Recipe Book demo app** to showcase all features. Get started in 5 minutes:
+We've built a complete **Recipe Book demo app** to showcase all features:
 
 ```bash
-# Quick setup
-cd test-harness/scripts
-./setup.sh
+# 1. Build everything
+npm install && npm run build
+cd demo-app && npm install && cd ..
 
-# Start services
+# 2. Start services
 tauri-driver                    # Terminal 1
 cd demo-app && npm run tauri dev  # Terminal 2
 
-# Try interactive scenarios
-open test-harness/scenarios/01-getting-started.md
+# 3. Configure Claude (see Quick Start below)
+# 4. Test with Claude!
 ```
 
-**👉 See [demo-app/README.md](demo-app/README.md) for full details.**
+**👉 See [QUICK-START.md](QUICK-START.md) for detailed setup.**
 
 ## Quick Start
 
@@ -49,53 +49,36 @@ cd mcp-tauri-automation
 npm install && npm run build
 ```
 
-**3. Add to your MCP config**
+**3. Configure your MCP client**
 
-<details>
-<summary><b>Claude Desktop</b></summary>
+Add this to your Claude config file:
 
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "tauri-automation": {
-      "command": "node",
-      "args": ["/absolute/path/to/mcp-tauri-automation/dist/index.js"],
-      "env": {
-        "TAURI_APP_PATH": "/path/to/your/tauri/app/target/debug/your-app"
-      }
-    }
-  }
-}
-```
-</details>
-
-<details>
-<summary><b>Claude Code CLI</b></summary>
-
-Edit `~/.config/claude-code/mcp_config.json`:
+**Claude Code:** `~/.config/Claude/mcp_config.json`
+**Claude Desktop:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "tauri-automation": {
       "command": "node",
-      "args": ["/absolute/path/to/mcp-tauri-automation/dist/index.js"],
+      "args": ["/ABSOLUTE/PATH/TO/mcp-tauri-automation/dist/index.js"],
       "env": {
-        "TAURI_APP_PATH": "/path/to/your/tauri/app/target/debug/your-app"
+        "TAURI_DRIVER_URL": "http://localhost:4444"
       }
     }
   }
 }
 ```
-</details>
+
+**Important:** Replace `/ABSOLUTE/PATH/TO/` with the full path to this repo!
 
 <details>
-<summary><b>Other MCP Clients</b></summary>
+<summary>💡 Finding your absolute path</summary>
 
-Any MCP client that supports stdio transport can use this server. Pass the environment variables via the client's configuration mechanism.
-
+```bash
+cd mcp-tauri-automation
+pwd  # Copy this path and replace /ABSOLUTE/PATH/TO/ above
+```
 </details>
 
 **4. Start tauri-driver**
