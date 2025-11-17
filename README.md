@@ -33,6 +33,54 @@ npm install && npm run build
 **3. Add to your MCP config**
 
 <details>
+<summary><b>Claude Code (Recommended)</b></summary>
+
+Use the Claude Code CLI to register the server:
+
+```bash
+# Basic registration with environment variable
+claude mcp add tauri-automation \
+  -e TAURI_APP_PATH=/path/to/your/tauri/app/target/debug/your-app \
+  --scope user \
+  -- node /absolute/path/to/mcp-tauri-automation/dist/index.js
+
+# Or use JSON format for more complex configurations
+claude mcp add-json tauri-automation '{
+  "command": "node",
+  "args": ["/absolute/path/to/mcp-tauri-automation/dist/index.js"],
+  "env": {
+    "TAURI_APP_PATH": "/path/to/your/tauri/app/target/debug/your-app",
+    "TAURI_SCREENSHOT_DIR": "./screenshots",
+    "TAURI_DEFAULT_TIMEOUT": "5000"
+  }
+}'
+```
+
+**Verify installation:**
+```bash
+# List all registered MCP servers
+claude mcp list
+
+# Check server connection status
+# Inside Claude Code, use: /mcp
+```
+
+**Additional commands:**
+```bash
+# Remove a server
+claude mcp remove tauri-automation
+
+# Test server connection
+claude mcp get tauri-automation
+```
+
+**Scope options:**
+- `--scope user` or `-s user`: Available in all projects (recommended)
+- `--scope project` or `-s project`: Available only in current project
+
+</details>
+
+<details>
 <summary><b>Claude Desktop</b></summary>
 
 Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
@@ -53,7 +101,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 </details>
 
 <details>
-<summary><b>Claude Code CLI</b></summary>
+<summary><b>Claude Code (Manual Config)</b></summary>
 
 Edit `~/.config/claude-code/mcp_config.json`:
 
@@ -70,6 +118,9 @@ Edit `~/.config/claude-code/mcp_config.json`:
   }
 }
 ```
+
+**Note**: Using the `claude mcp add` command (see "Claude Code (Recommended)" above) is easier and less error-prone than manual editing.
+
 </details>
 
 <details>
