@@ -35,47 +35,48 @@ npm install && npm run build
 <details>
 <summary><b>Claude Code (Recommended)</b></summary>
 
-Use the Claude Code CLI to register the server. Choose between **stdio** (local process) or **JSON** format:
-
-**Option 1: Stdio transport (recommended for most users)**
+Use the Claude Code CLI to register the server:
 
 ```bash
-# Add server with stdio transport
+# Simplest setup - works with any Tauri app
+# (you'll specify which app to launch when you ask Claude)
 claude mcp add --transport stdio tauri-automation \
-  --env TAURI_APP_PATH=/path/to/your/tauri/app/target/debug/your-app \
-  --scope user \
-  -- node /absolute/path/to/mcp-tauri-automation/dist/index.js
-
-# With multiple environment variables
-claude mcp add --transport stdio tauri-automation \
-  --env TAURI_APP_PATH=/path/to/your/tauri/app/target/debug/your-app \
-  --env TAURI_SCREENSHOT_DIR=./screenshots \
-  --env TAURI_DEFAULT_TIMEOUT=5000 \
   --scope user \
   -- node /absolute/path/to/mcp-tauri-automation/dist/index.js
 ```
 
-> **Note**: The `--` (double dash) separates Claude CLI flags from the server command. Everything before `--` are options for Claude (like `--env`, `--scope`), and everything after `--` is the actual command to run the MCP server.
+Replace `/absolute/path/to/mcp-tauri-automation` with the actual path where you cloned this repo. For example:
+- Linux/macOS: `~/projects/mcp-tauri-automation/dist/index.js`
+- Windows: `C:/Users/YourName/projects/mcp-tauri-automation/dist/index.js`
 
-**Option 2: JSON format (for advanced configurations)**
+**Optional: Set a default app path**
+
+If you mainly work with one Tauri app, you can set it as the default:
 
 ```bash
-claude mcp add-json tauri-automation '{
-  "type": "stdio",
-  "command": "node",
-  "args": ["/absolute/path/to/mcp-tauri-automation/dist/index.js"],
-  "env": {
-    "TAURI_APP_PATH": "/path/to/your/tauri/app/target/debug/your-app",
-    "TAURI_SCREENSHOT_DIR": "./screenshots",
-    "TAURI_DEFAULT_TIMEOUT": "5000"
-  }
-}'
+claude mcp add --transport stdio tauri-automation \
+  --env TAURI_APP_PATH=/path/to/your-app/src-tauri/target/debug/your-app \
+  --scope user \
+  -- node /absolute/path/to/mcp-tauri-automation/dist/index.js
 ```
 
-**Scope options:**
-- `--scope local` (default): Available only to you in the current project
-- `--scope project`: Shared with everyone in the project via `.mcp.json` file (committed to git)
-- `--scope user`: Available to you across all projects
+> **💡 Can I test multiple apps?** Yes! The `TAURI_APP_PATH` is just a convenience default. You can still launch any other Tauri app by specifying its path when you ask Claude (e.g., "Launch my calculator app at ~/projects/calculator-app/target/debug/calculator").
+
+**Advanced: Customize defaults**
+
+```bash
+claude mcp add --transport stdio tauri-automation \
+  --env TAURI_SCREENSHOT_DIR=./my-screenshots \
+  --env TAURI_DEFAULT_TIMEOUT=10000 \
+  --scope user \
+  -- node /absolute/path/to/mcp-tauri-automation/dist/index.js
+```
+
+All environment variables have sensible defaults and are optional:
+- `TAURI_APP_PATH`: No default (specify when launching, or set here for convenience)
+- `TAURI_SCREENSHOT_DIR`: `./screenshots` (relative to where you run Claude Code)
+- `TAURI_WEBDRIVER_PORT`: `4444` (where tauri-driver listens)
+- `TAURI_DEFAULT_TIMEOUT`: `5000` ms (how long to wait for UI elements)
 
 **Managing servers:**
 ```bash
@@ -92,6 +93,29 @@ claude mcp remove tauri-automation
 /mcp
 ```
 
+**Alternative: JSON format**
+
+<details>
+<summary>Click to see JSON configuration format</summary>
+
+```bash
+claude mcp add-json tauri-automation '{
+  "type": "stdio",
+  "command": "node",
+  "args": ["/absolute/path/to/mcp-tauri-automation/dist/index.js"],
+  "env": {
+    "TAURI_APP_PATH": "/optional/default/app/path"
+  }
+}'
+```
+
+</details>
+
+**Scope options:**
+- `--scope user`: Available to you across all projects (recommended)
+- `--scope local` (default): Available only to you in the current project
+- `--scope project`: Shared with everyone in the project via `.mcp.json` file
+
 </details>
 
 <details>
@@ -104,14 +128,28 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "tauri-automation": {
       "command": "node",
+      "args": ["/absolute/path/to/mcp-tauri-automation/dist/index.js"]
+    }
+  }
+}
+```
+
+**Optional: Add environment variables**
+
+```json
+{
+  "mcpServers": {
+    "tauri-automation": {
+      "command": "node",
       "args": ["/absolute/path/to/mcp-tauri-automation/dist/index.js"],
       "env": {
-        "TAURI_APP_PATH": "/path/to/your/tauri/app/target/debug/your-app"
+        "TAURI_APP_PATH": "/path/to/your/default/app"
       }
     }
   }
 }
 ```
+
 </details>
 
 <details>
@@ -124,9 +162,22 @@ Edit `~/.config/claude-code/mcp_config.json`:
   "mcpServers": {
     "tauri-automation": {
       "command": "node",
+      "args": ["/absolute/path/to/mcp-tauri-automation/dist/index.js"]
+    }
+  }
+}
+```
+
+**Optional: Add environment variables**
+
+```json
+{
+  "mcpServers": {
+    "tauri-automation": {
+      "command": "node",
       "args": ["/absolute/path/to/mcp-tauri-automation/dist/index.js"],
       "env": {
-        "TAURI_APP_PATH": "/path/to/your/tauri/app/target/debug/your-app"
+        "TAURI_APP_PATH": "/path/to/your/default/app"
       }
     }
   }
@@ -145,14 +196,31 @@ Any MCP client that supports stdio transport can use this server. Pass the envir
 </details>
 
 **4. Start tauri-driver**
+
+Before using the MCP server, start `tauri-driver` in a separate terminal:
+
 ```bash
 # In a separate terminal, keep this running
 tauri-driver
 ```
 
+> **Why is tauri-driver separate?**
+>
+> `tauri-driver` is a standalone WebDriver server that controls Tauri apps. Keeping it separate means:
+> - ✅ You can restart your MCP server without losing app state
+> - ✅ Multiple tools can connect to the same driver instance
+> - ✅ It runs on a known port (4444) that's easy to configure
+>
+> **Future improvement**: This MCP server could be enhanced to auto-start tauri-driver if it's not running. Interested in contributing? See [Contributing](#development) below!
+
 **5. Use with Claude**
 ```
 Launch my Tauri app, click the "Start" button, and take a screenshot
+```
+
+Or if you didn't set a default app path:
+```
+Launch my calculator app at ~/projects/calculator/target/debug/calculator and test addition
 ```
 
 ## Available Tools
@@ -171,15 +239,15 @@ Launch my Tauri app, click the "Start" button, and take a screenshot
 
 ## Configuration
 
-Configure the server using environment variables:
+**All environment variables are optional** with sensible defaults:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `TAURI_APP_PATH` | Path to your Tauri app binary | None (required in tool call or env) |
-| `TAURI_SCREENSHOT_DIR` | Where to save screenshots | `./screenshots` |
-| `TAURI_WEBDRIVER_PORT` | Port where tauri-driver runs | `4444` |
-| `TAURI_DEFAULT_TIMEOUT` | Element wait timeout in ms | `5000` |
-| `TAURI_DRIVER_PATH` | Path to tauri-driver binary | `tauri-driver` |
+| Variable | Description | Default | When to set |
+|----------|-------------|---------|-------------|
+| `TAURI_APP_PATH` | Path to your Tauri app binary | None | Set if you mainly work with one app (but you can still launch others) |
+| `TAURI_SCREENSHOT_DIR` | Where to save screenshots | `./screenshots` | Change if you want screenshots in a different location |
+| `TAURI_WEBDRIVER_PORT` | Port where tauri-driver runs | `4444` | Only if you're running tauri-driver on a custom port |
+| `TAURI_DEFAULT_TIMEOUT` | Element wait timeout in ms | `5000` | Increase for slow-loading apps, decrease for faster feedback |
+| `TAURI_DRIVER_PATH` | Path to tauri-driver binary | `tauri-driver` | Only if tauri-driver isn't in your PATH |
 
 ### Finding Your Tauri App Binary
 
