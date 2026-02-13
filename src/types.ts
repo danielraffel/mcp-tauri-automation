@@ -56,6 +56,8 @@ export interface ScreenshotParams {
   filename?: string;
   /** Whether to return base64 data instead of saving to file */
   returnBase64?: boolean;
+  /** Timeout in milliseconds for the screenshot operation. Default: 10000 */
+  timeout?: number;
 }
 
 /**
