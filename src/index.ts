@@ -96,6 +96,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: 'Whether to return base64 image data (true) or save to file and return path (false). Default: true',
               default: true,
             },
+            timeout: {
+              type: 'number',
+              description: 'Timeout in milliseconds for the screenshot operation. Default: 10000',
+              default: 10000,
+            },
           },
         },
       },
