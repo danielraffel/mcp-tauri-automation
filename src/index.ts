@@ -16,7 +16,7 @@ import {
 import { TauriDriver } from './tauri-driver.js';
 import { launchApp, closeApp, getAppState } from './tools/launch.js';
 import { captureScreenshot } from './tools/screenshot.js';
-import { clickElement, typeText, waitForElement, getElementText } from './tools/interact.js';
+import { clickElement, typeText, waitForElement, waitForNavigation, getElementText } from './tools/interact.js';
 import { executeTauriCommand, executeScript, getPageTitle, getPageUrl } from './tools/state.js';
 import type { TauriAutomationConfig } from './types.js';
 
@@ -176,6 +176,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
           required: ['selector'],
+        },
+      },
+      {
+        name: 'wait_for_navigation',
+        description: 'Wait for a page navigation to complete. Can wait for any URL change or for the URL to contain a specific substring.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            urlContains: {
+              type: 'string',
+              description: 'Optional substring the URL must contain. If omitted, waits for any URL change from the current URL.',
+            },
+            timeout: {
+              type: 'number',
+              description: 'Timeout in milliseconds. Default: 5000',
+              default: 5000,
+            },
+          },
         },
       },
       {
@@ -349,6 +367,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'wait_for_element': {
         const result = await waitForElement(driver, args as any);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'wait_for_navigation': {
+        const result = await waitForNavigation(driver, args as any);
         return {
           content: [
             {

@@ -192,6 +192,36 @@ export class TauriDriver {
   }
 
   /**
+   * Wait for navigation (URL change or match a pattern)
+   */
+  async waitForNavigation(opts: { urlContains?: string; timeout?: number } = {}): Promise<string> {
+    this.ensureAppRunning();
+
+    const timeoutMs = opts.timeout || this.config.defaultTimeout;
+    const startUrl = await this.appState.browser!.getUrl();
+
+    await this.appState.browser!.waitUntil(
+      async () => {
+        const currentUrl = await this.appState.browser!.getUrl();
+        if (opts.urlContains) {
+          return currentUrl.includes(opts.urlContains);
+        }
+        // If no pattern specified, wait for any URL change
+        return currentUrl !== startUrl;
+      },
+      {
+        timeout: timeoutMs,
+        timeoutMsg: opts.urlContains
+          ? `URL did not contain "${opts.urlContains}" within ${timeoutMs}ms`
+          : `URL did not change from "${startUrl}" within ${timeoutMs}ms`,
+        interval: 200,
+      }
+    );
+
+    return await this.appState.browser!.getUrl();
+  }
+
+  /**
    * Get text content of an element
    */
   async getElementText(selector: string, by: SelectorStrategy = 'css'): Promise<string> {
