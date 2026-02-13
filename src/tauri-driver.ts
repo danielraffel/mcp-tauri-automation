@@ -208,16 +208,21 @@ export class TauriDriver {
     await this.appState.browser!.waitUntil(
       async () => {
         const currentUrl = await this.appState.browser!.getUrl();
+        // Always require URL to change from starting URL
+        if (currentUrl === startUrl) {
+          return false;
+        }
+        // If urlContains specified, also check that the new URL matches
         if (opts.urlContains) {
           return currentUrl.includes(opts.urlContains);
         }
-        // If no pattern specified, wait for any URL change
-        return currentUrl !== startUrl;
+        // Otherwise, any URL change is sufficient
+        return true;
       },
       {
         timeout: timeoutMs,
         timeoutMsg: opts.urlContains
-          ? `URL did not contain "${opts.urlContains}" within ${timeoutMs}ms`
+          ? `URL did not change to one containing "${opts.urlContains}" within ${timeoutMs}ms`
           : `URL did not change from "${startUrl}" within ${timeoutMs}ms`,
         interval: 200,
       }
