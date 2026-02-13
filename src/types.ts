@@ -59,33 +59,44 @@ export interface ScreenshotParams {
 }
 
 /**
+ * Selector strategy for finding elements
+ */
+export type SelectorStrategy = 'css' | 'xpath' | 'text' | 'partial_text';
+
+/**
  * Element interaction parameters
  */
 export interface ElementSelector {
-  /** CSS selector string */
+  /** Selector string (CSS, XPath, or text depending on `by` strategy) */
   selector: string;
+  /** Selector strategy. Default: 'css' */
+  by?: SelectorStrategy;
 }
 
 /**
  * Type text parameters
  */
 export interface TypeTextParams {
-  /** CSS selector for the input element */
+  /** Selector for the input element */
   selector: string;
   /** Text to type */
   text: string;
   /** Whether to clear existing text first */
   clear?: boolean;
+  /** Selector strategy. Default: 'css' */
+  by?: SelectorStrategy;
 }
 
 /**
  * Wait for element parameters
  */
 export interface WaitForElementParams {
-  /** CSS selector to wait for */
+  /** Selector to wait for */
   selector: string;
   /** Timeout in milliseconds */
   timeout?: number;
+  /** Selector strategy. Default: 'css' */
+  by?: SelectorStrategy;
 }
 
 /**

@@ -101,13 +101,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'click_element',
-        description: 'Click a UI element identified by a CSS selector',
+        description: 'Click a UI element identified by a selector. Supports CSS selectors, XPath, exact text match, and partial text match.',
         inputSchema: {
           type: 'object',
           properties: {
             selector: {
               type: 'string',
-              description: 'CSS selector to identify the element to click (e.g., "#button-id", ".button-class", "button[name=submit]")',
+              description: 'Selector to identify the element. For CSS: "#id", ".class". For XPath: "//button[@name=\'submit\']". For text: "Submit". For partial_text: "Subm".',
+            },
+            by: {
+              type: 'string',
+              enum: ['css', 'xpath', 'text', 'partial_text'],
+              description: 'Selector strategy. Default: "css"',
+              default: 'css',
             },
           },
           required: ['selector'],
@@ -121,7 +127,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             selector: {
               type: 'string',
-              description: 'CSS selector to identify the input element',
+              description: 'Selector to identify the input element',
             },
             text: {
               type: 'string',
@@ -131,6 +137,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: 'boolean',
               description: 'Whether to clear existing text before typing. Default: false',
               default: false,
+            },
+            by: {
+              type: 'string',
+              enum: ['css', 'xpath', 'text', 'partial_text'],
+              description: 'Selector strategy. Default: "css"',
+              default: 'css',
             },
           },
           required: ['selector', 'text'],
@@ -144,12 +156,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             selector: {
               type: 'string',
-              description: 'CSS selector to wait for',
+              description: 'Selector to wait for',
             },
             timeout: {
               type: 'number',
               description: 'Timeout in milliseconds. Default: 5000',
               default: 5000,
+            },
+            by: {
+              type: 'string',
+              enum: ['css', 'xpath', 'text', 'partial_text'],
+              description: 'Selector strategy. Default: "css"',
+              default: 'css',
             },
           },
           required: ['selector'],
@@ -163,7 +181,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             selector: {
               type: 'string',
-              description: 'CSS selector to identify the element',
+              description: 'Selector to identify the element',
+            },
+            by: {
+              type: 'string',
+              enum: ['css', 'xpath', 'text', 'partial_text'],
+              description: 'Selector strategy. Default: "css"',
+              default: 'css',
             },
           },
           required: ['selector'],
