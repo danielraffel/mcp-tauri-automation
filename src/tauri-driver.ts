@@ -99,7 +99,7 @@ export class TauriDriver {
   async captureScreenshot(filename?: string, returnBase64: boolean = false, timeout?: number): Promise<string> {
     this.ensureAppRunning();
 
-    const timeoutMs = timeout || 10000;
+    const timeoutMs = timeout ?? 10000; // Use nullish coalescing to preserve explicit 0
     const screenshotPromise = this.appState.browser!.takeScreenshot();
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error(`Screenshot timed out after ${timeoutMs}ms`)), timeoutMs)
