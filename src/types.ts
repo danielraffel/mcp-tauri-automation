@@ -89,6 +89,16 @@ export interface WaitForElementParams {
 }
 
 /**
+ * Wait for navigation parameters
+ */
+export interface WaitForNavigationParams {
+  /** Optional substring the URL must contain. If omitted, waits for any URL change. */
+  urlContains?: string;
+  /** Timeout in milliseconds. Default: 5000 */
+  timeout?: number;
+}
+
+/**
  * Execute Tauri command parameters
  */
 export interface ExecuteTauriCommandParams {
