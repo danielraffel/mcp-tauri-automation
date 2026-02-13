@@ -124,17 +124,22 @@ export class TauriDriver {
    * Resolve a selector string for WebDriverIO based on the strategy.
    * - css (default): passed through as-is
    * - xpath: passed through (WDIO auto-detects // prefix)
-   * - text: exact text match using WDIO's =text syntax
-   * - partial_text: partial text match using WDIO's *=text syntax
+   * - text: exact text match using XPath (works for all elements, not just links)
+   * - partial_text: partial text match using XPath (works for all elements)
    */
   private resolveSelector(selector: string, by: SelectorStrategy = 'css'): string {
     switch (by) {
       case 'xpath':
         return selector;
       case 'text':
-        return `=${selector}`;
+        // Use XPath for exact text match - works for all element types
+        // Escape single quotes in selector for XPath safety
+        const escapedText = selector.replace(/'/g, "\\'");
+        return `//*[text()='${escapedText}']`;
       case 'partial_text':
-        return `*=${selector}`;
+        // Use XPath for partial text match - works for all element types
+        const escapedPartial = selector.replace(/'/g, "\\'");
+        return `//*[contains(., '${escapedPartial}')]`;
       case 'css':
       default:
         return selector;
