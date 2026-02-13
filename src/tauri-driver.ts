@@ -186,7 +186,7 @@ export class TauriDriver {
   async waitForElement(selector: string, timeout?: number, by: SelectorStrategy = 'css'): Promise<void> {
     this.ensureAppRunning();
 
-    const waitTimeout = timeout || this.config.defaultTimeout;
+    const waitTimeout = timeout ?? this.config.defaultTimeout;
     const resolved = this.resolveSelector(selector, by);
     const element = await this.appState.browser!.$(resolved);
 
@@ -202,7 +202,7 @@ export class TauriDriver {
   async waitForNavigation(opts: { urlContains?: string; timeout?: number } = {}): Promise<string> {
     this.ensureAppRunning();
 
-    const timeoutMs = opts.timeout || this.config.defaultTimeout;
+    const timeoutMs = opts.timeout ?? this.config.defaultTimeout;
     const startUrl = await this.appState.browser!.getUrl();
 
     await this.appState.browser!.waitUntil(
