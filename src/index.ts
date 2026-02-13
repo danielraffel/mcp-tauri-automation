@@ -17,7 +17,7 @@ import { TauriDriver } from './tauri-driver.js';
 import { launchApp, closeApp, getAppState } from './tools/launch.js';
 import { captureScreenshot } from './tools/screenshot.js';
 import { clickElement, typeText, waitForElement, getElementText } from './tools/interact.js';
-import { executeTauriCommand } from './tools/state.js';
+import { executeTauriCommand, executeScript, getPageTitle, getPageUrl } from './tools/state.js';
 import type { TauriAutomationConfig } from './types.js';
 
 // Parse config from environment variables
@@ -189,6 +189,41 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'execute_script',
+        description: 'Execute arbitrary JavaScript in the application context and return the result',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            script: {
+              type: 'string',
+              description: 'JavaScript code to execute. Use "return" to get a value back.',
+            },
+            args: {
+              type: 'array',
+              description: 'Optional arguments accessible as arguments[0], arguments[1], etc.',
+              items: {},
+            },
+          },
+          required: ['script'],
+        },
+      },
+      {
+        name: 'get_page_title',
+        description: 'Get the current page title of the application',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        name: 'get_page_url',
+        description: 'Get the current page URL of the application',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
         name: 'get_app_state',
         description: 'Get the current state of the application, including whether it\'s running, session info, and page details',
         inputSchema: {
@@ -309,6 +344,42 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'execute_tauri_command': {
         const result = await executeTauriCommand(driver, args as any);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'execute_script': {
+        const result = await executeScript(driver, args as any);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'get_page_title': {
+        const result = await getPageTitle(driver);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'get_page_url': {
+        const result = await getPageUrl(driver);
         return {
           content: [
             {

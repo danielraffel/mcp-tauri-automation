@@ -99,6 +99,16 @@ export interface ExecuteTauriCommandParams {
 }
 
 /**
+ * Execute script parameters
+ */
+export interface ExecuteScriptParams {
+  /** JavaScript code to execute */
+  script: string;
+  /** Optional arguments accessible as arguments[0], arguments[1], etc. */
+  args?: unknown[];
+}
+
+/**
  * Tool response wrapper
  */
 export interface ToolResponse<T = unknown> {
