@@ -25,7 +25,7 @@ cargo install tauri-driver
 
 **2. Install this MCP server**
 ```bash
-git clone <repo-url>
+git clone https://github.com/danielraffel/mcp-tauri-automation.git
 cd mcp-tauri-automation
 npm install && npm run build
 ```
