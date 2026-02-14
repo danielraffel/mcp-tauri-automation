@@ -14,7 +14,7 @@ export async function captureScreenshot(
 ): Promise<ToolResponse<{ path?: string; base64?: string; message: string }>> {
   try {
     const returnBase64 = params.returnBase64 ?? true; // Default to base64 for MCP
-    const result = await driver.captureScreenshot(params.filename, returnBase64);
+    const result = await driver.captureScreenshot(params.filename, returnBase64, params.timeout);
 
     if (returnBase64) {
       return {

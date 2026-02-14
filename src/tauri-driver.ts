@@ -4,7 +4,7 @@
  */
 
 import { remote } from 'webdriverio';
-import type { AppState, LaunchAppParams, TauriAutomationConfig } from './types.js';
+import type { AppState, LaunchAppParams, SelectorStrategy, TauriAutomationConfig } from './types.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -94,12 +94,18 @@ export class TauriDriver {
   }
 
   /**
-   * Capture a screenshot
+   * Capture a screenshot with optional timeout
    */
-  async captureScreenshot(filename?: string, returnBase64: boolean = false): Promise<string> {
+  async captureScreenshot(filename?: string, returnBase64: boolean = false, timeout?: number): Promise<string> {
     this.ensureAppRunning();
 
-    const screenshot = await this.appState.browser!.takeScreenshot();
+    const timeoutMs = timeout ?? 10000; // Use nullish coalescing to preserve explicit 0
+    const screenshotPromise = this.appState.browser!.takeScreenshot();
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Screenshot timed out after ${timeoutMs}ms`)), timeoutMs)
+    );
+
+    const screenshot = await Promise.race([screenshotPromise, timeoutPromise]);
 
     if (returnBase64) {
       return screenshot;
@@ -115,14 +121,41 @@ export class TauriDriver {
   }
 
   /**
-   * Click an element by CSS selector
+   * Resolve a selector string for WebDriverIO based on the strategy.
+   * - css (default): passed through as-is
+   * - xpath: passed through (WDIO auto-detects // prefix)
+   * - text: exact text match using XPath (works for all elements, not just links)
+   * - partial_text: partial text match using XPath (works for all elements)
    */
-  async clickElement(selector: string): Promise<void> {
+  private resolveSelector(selector: string, by: SelectorStrategy = 'css'): string {
+    switch (by) {
+      case 'xpath':
+        return selector;
+      case 'text':
+        // Use XPath for exact text match - works for all element types
+        // Escape single quotes in selector for XPath safety
+        const escapedText = selector.replace(/'/g, "\\'");
+        return `//*[text()='${escapedText}']`;
+      case 'partial_text':
+        // Use XPath for partial text match - works for all element types
+        const escapedPartial = selector.replace(/'/g, "\\'");
+        return `//*[contains(., '${escapedPartial}')]`;
+      case 'css':
+      default:
+        return selector;
+    }
+  }
+
+  /**
+   * Click an element
+   */
+  async clickElement(selector: string, by: SelectorStrategy = 'css'): Promise<void> {
     this.ensureAppRunning();
 
-    const element = await this.appState.browser!.$(selector);
+    const resolved = this.resolveSelector(selector, by);
+    const element = await this.appState.browser!.$(resolved);
     if (!(await element.isExisting())) {
-      throw new Error(`Element not found: ${selector}`);
+      throw new Error(`Element not found (${by}): ${selector}`);
     }
 
     await element.click();
@@ -131,12 +164,13 @@ export class TauriDriver {
   /**
    * Type text into an element
    */
-  async typeText(selector: string, text: string, clear: boolean = false): Promise<void> {
+  async typeText(selector: string, text: string, clear: boolean = false, by: SelectorStrategy = 'css'): Promise<void> {
     this.ensureAppRunning();
 
-    const element = await this.appState.browser!.$(selector);
+    const resolved = this.resolveSelector(selector, by);
+    const element = await this.appState.browser!.$(resolved);
     if (!(await element.isExisting())) {
-      throw new Error(`Element not found: ${selector}`);
+      throw new Error(`Element not found (${by}): ${selector}`);
     }
 
     if (clear) {
@@ -149,27 +183,64 @@ export class TauriDriver {
   /**
    * Wait for an element to appear
    */
-  async waitForElement(selector: string, timeout?: number): Promise<void> {
+  async waitForElement(selector: string, timeout?: number, by: SelectorStrategy = 'css'): Promise<void> {
     this.ensureAppRunning();
 
-    const waitTimeout = timeout || this.config.defaultTimeout;
-    const element = await this.appState.browser!.$(selector);
+    const waitTimeout = timeout ?? this.config.defaultTimeout;
+    const resolved = this.resolveSelector(selector, by);
+    const element = await this.appState.browser!.$(resolved);
 
     await element.waitForExist({
       timeout: waitTimeout,
-      timeoutMsg: `Element not found within ${waitTimeout}ms: ${selector}`,
+      timeoutMsg: `Element not found within ${waitTimeout}ms (${by}): ${selector}`,
     });
+  }
+
+  /**
+   * Wait for navigation (URL change or match a pattern)
+   */
+  async waitForNavigation(opts: { urlContains?: string; timeout?: number } = {}): Promise<string> {
+    this.ensureAppRunning();
+
+    const timeoutMs = opts.timeout ?? this.config.defaultTimeout;
+    const startUrl = await this.appState.browser!.getUrl();
+
+    await this.appState.browser!.waitUntil(
+      async () => {
+        const currentUrl = await this.appState.browser!.getUrl();
+        // Always require URL to change from starting URL
+        if (currentUrl === startUrl) {
+          return false;
+        }
+        // If urlContains specified, also check that the new URL matches
+        if (opts.urlContains) {
+          return currentUrl.includes(opts.urlContains);
+        }
+        // Otherwise, any URL change is sufficient
+        return true;
+      },
+      {
+        timeout: timeoutMs,
+        timeoutMsg: opts.urlContains
+          ? `URL did not change to one containing "${opts.urlContains}" within ${timeoutMs}ms`
+          : `URL did not change from "${startUrl}" within ${timeoutMs}ms`,
+        interval: 200,
+      }
+    );
+
+    return await this.appState.browser!.getUrl();
   }
 
   /**
    * Get text content of an element
    */
-  async getElementText(selector: string): Promise<string> {
+  async getElementText(selector: string, by: SelectorStrategy = 'css'): Promise<string> {
     this.ensureAppRunning();
 
-    const element = await this.appState.browser!.$(selector);
+    const resolved = this.resolveSelector(selector, by);
+    const element = await this.appState.browser!.$(resolved);
     if (!(await element.isExisting())) {
-      throw new Error(`Element not found: ${selector}`);
+      throw new Error(`Element not found (${by}): ${selector}`);
     }
 
     return await element.getText();
